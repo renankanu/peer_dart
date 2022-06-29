@@ -1,4 +1,4 @@
-# peer_fl
+# peer_dart
 
 peer.js port to Flutter
 
