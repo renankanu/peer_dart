@@ -12,7 +12,7 @@ class API {
   API(this.options);
 
   String _buildUrl(String method) {
-    final protocol = options.secure ? "https://" : "http://";
+    final protocol = options.secure! ? "https://" : "http://";
     var url = protocol +
         options.host +
         ":" +
@@ -31,12 +31,11 @@ class API {
     return url;
   }
 
-  /** Get a unique ID from the server via XHR and initialize with it. */
   Future<String> retrieveId() async {
     final url = _buildUrl("id");
 
     try {
-      final response = await http.get(url);
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode != 200) {
         throw Exception('Error. Status:${response.statusCode}');
@@ -44,7 +43,7 @@ class API {
 
       return response.body;
     } catch (error) {
-      logger.error("Error retrieving ID" + error);
+      logger.error("Error retrieving ID $error");
 
       var pathError = "";
 

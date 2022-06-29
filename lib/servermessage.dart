@@ -1,5 +1,5 @@
 class ServerMessage {
-  String type;
+  String? type;
   dynamic payload;
-  String src;
+  String? src;
 }

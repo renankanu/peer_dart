@@ -19,27 +19,27 @@ class Logger {
 
   log(dynamic message) {
     if (this.logLevel >= LogLevel.All) {
-      this._print(LogLevel.All, message);
+      this._print!(LogLevel.All, message);
     }
   }
 
   warn(dynamic message) {
     if (this.logLevel >= LogLevel.Warnings) {
-      this._print(LogLevel.Warnings, message);
+      this._print!(LogLevel.Warnings, message);
     }
   }
 
   error(dynamic message) {
     if (this.logLevel >= LogLevel.Errors) {
-      this._print(LogLevel.Errors, message);
+      this._print!(LogLevel.Errors, message);
     }
   }
 
-  setLogFunction(Function fn) {
+  setLogFunction(Function? fn) {
     this._print = fn;
   }
 
-  Function _print = (int logLevel, dynamic message) {
+  Function? _print = (int logLevel, dynamic message) {
     var msg = '$LOG_PREFIX ${message.toString()}';
 
     if (logLevel >= LogLevel.All) {

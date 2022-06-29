@@ -1,21 +1,18 @@
 name: peer_dart
 description: peer.js port to Flutter
 version: 0.0.1
-author:
-homepage:
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
-  web_socket_channel: ^1.1.0
-  flutter_webrtc: ^0.1.7
-  http: ^0.12.0+2
-  msgpack2: ^2.0.0+1
-  eventify: ^0.1.4
+  web_socket_channel: ^2.2.0
+  flutter_webrtc: ^0.8.10
+  http: ^0.13.4
+  eventify: ^1.0.1
 
 dev_dependencies:
   flutter_test:

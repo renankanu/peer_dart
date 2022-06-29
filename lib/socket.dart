@@ -14,18 +14,18 @@ import 'peer.dart';
  */
 class Socket extends EventEmitter {
   var _disconnected = true;
-  String _id;
+  String? _id;
   var _messagesQueue = [];
-  IOWebSocketChannel _socket;
-  StreamSubscription _socketListener;
+  IOWebSocketChannel? _socket;
+  late StreamSubscription _socketListener;
   dynamic _wsPingTimer;
-  String _baseUrl;
+  String? _baseUrl;
   PeerOptions options;
 
   Socket(this.options) {
     options.pingInterval = options.pingInterval ?? 5000;
 
-    final wsProtocol = options.secure ? "wss://" : "ws://";
+    final wsProtocol = options.secure! ? "wss://" : "ws://";
 
     this._baseUrl = wsProtocol +
         options.host +
@@ -36,7 +36,7 @@ class Socket extends EventEmitter {
         options.key;
   }
 
-  start(String id, String token) {
+  start(String? id, String? token) {
     this._id = id;
 
     final wsUrl = '$_baseUrl&id=$id&token=$token';
@@ -48,7 +48,7 @@ class Socket extends EventEmitter {
     this._socket = IOWebSocketChannel.connect(wsUrl);
     this._disconnected = false;
 
-    _socketListener = this._socket.stream.listen((event) {
+    _socketListener = this._socket!.stream.listen((event) {
       var data;
 
       try {
@@ -83,7 +83,7 @@ class Socket extends EventEmitter {
 
   _scheduleHeartbeat() {
     this._wsPingTimer =
-        Future.delayed(Duration(milliseconds: options.pingInterval), () {
+        Future.delayed(Duration(milliseconds: options.pingInterval!), () {
       this._sendHeartbeat();
     });
   }
@@ -96,14 +96,14 @@ class Socket extends EventEmitter {
 
     final message = {'type': ServerMessageType.Heartbeat};
 
-    this._socket.sink.add(message);
+    this._socket!.sink.add(message);
 
     this._scheduleHeartbeat();
   }
 
   /** Is the websocket currently open? */
   bool _wsOpen() {
-    return this._socket != null && this._socket.protocol != null;
+    return this._socket != null && this._socket!.protocol != null;
   }
 
   /** Send queued messages. */
@@ -141,7 +141,7 @@ class Socket extends EventEmitter {
       return;
     }
 
-    this._socket.sink.add(data);
+    this._socket!.sink.add(data);
   }
 
   close() {

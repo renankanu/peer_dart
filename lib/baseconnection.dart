@@ -1,5 +1,5 @@
 import 'package:eventify/eventify.dart';
-import 'package:flutter_webrtc/webrtc.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'peer.dart';
 import 'servermessage.dart';
@@ -8,12 +8,12 @@ abstract class BaseConnection extends EventEmitter {
   var open = false;
 
   dynamic metadata;
-  String connectionId;
-  final String peer;
+  String? connectionId;
+  final String? peer;
   final Peer provider;
   final PeerConnectOption options;
 
-  RTCPeerConnection peerConnection;
+  RTCPeerConnection? peerConnection;
 
   String get type;
 

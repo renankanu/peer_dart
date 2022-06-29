@@ -1,4 +1,4 @@
-import 'package:flutter_webrtc/webrtc.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'baseconnection.dart';
 import 'enums.dart';
@@ -8,21 +8,18 @@ import 'peer.dart';
 import 'servermessage.dart';
 import 'util.dart';
 
-/**
- * Wraps the streaming interface between two Peers.
- */
 class MediaConnection extends BaseConnection {
   static const ID_PREFIX = "mc_";
 
-  Negotiator _negotiator;
-  MediaStream localStream;
-  MediaStream remoteStream;
+  Negotiator? _negotiator;
+  MediaStream? localStream;
+  MediaStream? remoteStream;
 
   String get type {
     return ConnectionType.Media;
   }
 
-  MediaConnection(String peerId, Peer provider, PeerConnectOption options)
+  MediaConnection(String? peerId, Peer provider, PeerConnectOption options)
       : super(peerId, provider, options) {
     this.localStream = this.options.stream;
     this.connectionId = this.options.connectionId ??
@@ -52,12 +49,12 @@ class MediaConnection extends BaseConnection {
 
     if (type == ServerMessageType.Answer) {
       // Forward to negotiator
-      this._negotiator.handleSDP(type, payload.sdp);
+      this._negotiator!.handleSDP(type, payload.sdp);
       this.open = true;
     } else if (type == ServerMessageType.Candidate) {
-      this._negotiator.handleCandidate(payload.candidate);
+      this._negotiator!.handleCandidate(payload.candidate);
     } else {
-      logger.warn('Unrecognized message type:${type} from peer:${this.peer}');
+      logger.warn('Unrecognized message type:$type from peer:${this.peer}');
     }
   }
 
@@ -76,7 +73,7 @@ class MediaConnection extends BaseConnection {
 
 //this._negotiator.startConnection({ ...this.options._payload, _stream: stream });
 // Retrieve lost messages stored because PeerConnection not set up.
-    final messages = this.provider.getMessages(this.connectionId);
+    final messages = this.provider.getMessages(this.connectionId)!;
 
     for (final message in messages) {
       this.handleMessage(message);
@@ -89,15 +86,15 @@ class MediaConnection extends BaseConnection {
    * Exposed functionality for users.
    */
 
-  /** Allows user to close connection. */
+  /// Allows user to close connection. */
   close() {
     if (this._negotiator != null) {
-      this._negotiator.cleanup();
+      this._negotiator!.cleanup();
       this._negotiator = null;
     }
 
-    this.localStream.dispose();
-    this.remoteStream.dispose();
+    this.localStream!.dispose();
+    this.remoteStream!.dispose();
     this.localStream = null;
     this.remoteStream = null;
 
@@ -106,7 +103,7 @@ class MediaConnection extends BaseConnection {
     }
 
     if (this.options != null && this.options.stream != null) {
-      this.options.stream.dispose();
+      this.options.stream!.dispose();
       this.options.stream = null;
     }
 

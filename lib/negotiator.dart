@@ -1,4 +1,4 @@
-import 'package:flutter_webrtc/webrtc.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'baseconnection.dart';
 import 'enums.dart';
@@ -6,47 +6,46 @@ import 'logger.dart';
 import 'mediaconnection.dart';
 import 'peer.dart';
 
-/**
- * Manages all negotiations between Peers.
- */
+/// Manages all negotiations between Peers.
 class Negotiator {
   final BaseConnection connection;
 
   Negotiator(this.connection);
 
-  /** Returns a PeerConnection object set up correctly (for data, media). */
+  /// Returns a PeerConnection object set up correctly (for data, media). */
   startConnection(PeerConnectOption options) async {
     final peerConnection = this._startPeerConnection();
 
     // Set the connection's PC.
-    this.connection.peerConnection = peerConnection;
+    this.connection.peerConnection = await peerConnection;
 
     if (this.connection.type == ConnectionType.Media &&
         options.stream != null) {
-      this._addTracksToConnection(options.stream, peerConnection);
+      this._addTracksToConnection(
+          options.stream!, this.connection.peerConnection!);
     }
 
     // What do we need to do now?
     if (options.originator != null) {
       this._makeOffer();
     } else {
-      this.handleSDP("OFFER", options.sdp);
+      this.handleSDP("OFFER", options.sdp!);
     }
   }
 
-  /** Start a PC. */
-  RTCPeerConnection _startPeerConnection() {
+  /// Start a PC. */
+  Future<RTCPeerConnection> _startPeerConnection() async {
     logger.log("Creating RTCPeerConnection.");
 
-    final peerConnection = new RTCPeerConnection(
-        this.connection.connectionId, this.connection.provider.options.config);
+    final peerConnection =
+        await createPeerConnection(this.connection.provider.options.config);
 
     this._setupListeners(peerConnection);
 
     return peerConnection;
   }
 
-  /** Set up various WebRTC listeners. */
+  /// Set up various WebRTC listeners. */
   _setupListeners(RTCPeerConnection peerConnection) {
     final peerId = this.connection.peer;
     final connectionId = this.connection.connectionId;
@@ -59,7 +58,7 @@ class Negotiator {
     peerConnection.onIceCandidate = (evt) {
       if (evt.candidate == null) return;
 
-      logger.log('Received ICE candidates for ${peerId}:' + evt.candidate);
+      logger.log('Received ICE candidates for $peerId:' + evt.candidate!);
 
       provider.socket.send({
         'type': ServerMessageType.Candidate,
@@ -76,14 +75,14 @@ class Negotiator {
       switch (state) {
         case RTCIceConnectionState.RTCIceConnectionStateFailed:
           logger.log(
-              "iceConnectionState is failed, closing connections to " + peerId);
+              "iceConnectionState is failed, closing connections to " + peerId!);
           this.connection.emit(ConnectionEventType.Error,
               "Negotiation of connection to " + peerId + " failed.");
           this.connection.close();
           break;
         case RTCIceConnectionState.RTCIceConnectionStateClosed:
           logger.log(
-              "iceConnectionState is closed, closing connections to " + peerId);
+              "iceConnectionState is closed, closing connections to " + peerId!);
           this.connection.emit(ConnectionEventType.Error,
               "Connection to " + peerId + " closed.");
           this.connection.close();
@@ -91,7 +90,7 @@ class Negotiator {
         case RTCIceConnectionState.RTCIceConnectionStateDisconnected:
           logger.log(
               "iceConnectionState is disconnected, closing connections to " +
-                  peerId);
+                  peerId!);
           this.connection.emit(ConnectionEventType.Error,
               "Connection to " + peerId + " disconnected.");
           this.connection.close();
@@ -100,7 +99,7 @@ class Negotiator {
           peerConnection.onIceCandidate = (_) {};
           break;
         default:
-          logger.log("iceConnectionState default" + peerId);
+          logger.log("iceConnectionState default" + peerId!);
       }
 
       this.connection.emit(ConnectionEventType.IceStateChanged, state);
@@ -127,10 +126,10 @@ class Negotiator {
     peerConnection.onAddTrack = (stream, track) {
       logger.log("Received remote stream");
 
-      final connection = provider.getConnection(peerId, connectionId);
+      final connection = provider.getConnection(peerId, connectionId)!;
 
       if (connection.type == ConnectionType.Media) {
-        MediaConnection mediaConnection = connection;
+        MediaConnection mediaConnection = connection as MediaConnection;
 
         this._addStreamToMediaConnection(stream, mediaConnection);
       }
@@ -138,7 +137,7 @@ class Negotiator {
   }
 
   cleanup() {
-    logger.log("Cleaning up PeerConnection to " + this.connection.peer);
+    logger.log("Cleaning up PeerConnection to " + this.connection.peer!);
 
     final peerConnection = this.connection.peerConnection;
 
@@ -157,19 +156,19 @@ class Negotiator {
   }
 
   _makeOffer() async {
-    final peerConnection = this.connection.peerConnection;
+    final peerConnection = this.connection.peerConnection!;
     final provider = this.connection.provider;
 
     try {
       final offer =
-          await peerConnection.createOffer(this.connection.options.constraints);
+          await peerConnection.createOffer(this.connection.options.constraints!);
 
       logger.log("Created offer.");
 
       if (this.connection.options.sdpTransform != null &&
           this.connection.options.sdpTransform is Function) {
         offer.sdp =
-            this.connection.options.sdpTransform(offer.sdp) ?? offer.sdp;
+            this.connection.options.sdpTransform!(offer.sdp) ?? offer.sdp;
       }
 
       try {
@@ -206,7 +205,7 @@ class Negotiator {
   }
 
   _makeAnswer() async {
-    final peerConnection = this.connection.peerConnection;
+    final peerConnection = this.connection.peerConnection!;
     final provider = this.connection.provider;
 
     try {
@@ -216,7 +215,7 @@ class Negotiator {
       if (this.connection.options.sdpTransform != null &&
           this.connection.options.sdpTransform is Function) {
         answer.sdp =
-            this.connection.options.sdpTransform(answer.sdp) ?? answer.sdp;
+            this.connection.options.sdpTransform!(answer.sdp) ?? answer.sdp;
       }
 
       try {
@@ -244,16 +243,16 @@ class Negotiator {
     }
   }
 
-  /** Handle an SDP. */
-  handleSDP(String type, RTCSessionDescription sdp) async {
-    final peerConnection = this.connection.peerConnection;
+  /// Handle an SDP. */
+  handleSDP(String? type, RTCSessionDescription sdp) async {
+    final peerConnection = this.connection.peerConnection!;
     final provider = this.connection.provider;
 
     logger.log("Setting remote description" + sdp.toMap().toString());
 
     try {
       await peerConnection.setRemoteDescription(sdp);
-      logger.log('Set remoteDescription:${type} for:${this.connection.peer}');
+      logger.log('Set remoteDescription:$type for:${this.connection.peer}');
       if (type == "OFFER") {
         await this._makeAnswer();
       }
@@ -263,11 +262,11 @@ class Negotiator {
     }
   }
 
-  /** Handle a candidate. */
+  /// Handle a candidate. */
   handleCandidate(RTCIceCandidate ice) async {
     logger.log('handleCandidate:' + ice.toMap().toString());
 
-    final peerConnection = this.connection.peerConnection;
+    final peerConnection = this.connection.peerConnection!;
     final provider = this.connection.provider;
 
     try {
